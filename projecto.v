@@ -56,12 +56,15 @@ Extract Constant show_N =>
   "let _ = Random.self_init()".
 
 Extract Constant getNRandoms =>
-  "let rec n_rnums n r =
-    let p = randomRNat (33,126) (mkRandomSeed r)
-    in if n==0 then [fst p] else (fst p)::n_rnums (n-1) (fst p)".
+  "let rec n_rnums n r lower upper =
+    let p = randomRNat (lower, upper) (mkRandomSeed r)
+    in if n==0 then [fst p] else (fst p)::n_rnums (n-1) (fst p) lower upper".
 *)
-(* Extraction "test.ml" randomRNat mkRandomSeed show_N. *)
 
+(*Fixpoint n_rnums (n : nat) (r:Z) (lower : nat) (upper : nat) :=
+  let p := randomRNat (lower, upper) (mkRandomSeed r) in
+  if beq_nat n 0 then [fst p] else (fst p)::n_rnums (n-1) (fst p) lower upper.
+*)
 (* Params represents the policy of the password generation
   (N, l, u, d, s) where:
     - N represents the length of the password
@@ -72,59 +75,6 @@ Extract Constant getNRandoms =>
  *)
 
 Definition params : (nat * nat * nat* nat * nat) := (20, 5, 5, 5, 5).
-
-(* Get elements of the tuple *)
-Definition getLength (params : (nat * nat * nat* nat * nat)) :=
-  fst (fst (fst (fst params))).
-
-Definition getNumberOfLowercases (params : (nat * nat * nat* nat * nat)) :=
-  snd (fst (fst (fst params))).
-
-Definition getNumberOfUppercases (params : (nat * nat * nat* nat * nat)) :=
-  snd (fst (fst params)).
-
-Definition getNumberOfDigits (params : (nat * nat * nat* nat * nat)) :=
-  snd (fst params).
-
-Definition getNumberOfSymbols (params : (nat * nat * nat* nat * nat)) :=
-  snd params.
-
-(* Produce parts of the password *)
-Fixpoint produceLowercase (size : nat) : string :=
-  "lowercase".
-
-Fixpoint produceUppercase (size : nat) : string :=
-  "uppercase".
-
-Fixpoint produceDigits (size : nat) : string :=
-  "digits".
-
-Fixpoint produceSymbols (size : nat) : string :=
-  "symbols".
-
-Definition producePassword (params : (nat * nat * nat* nat * nat)) : string :=
-  let totalCharacters := getLength params in
-  let numberOfLowercases := getNumberOfLowercases params in
-  let numberOfUppercases := getNumberOfUppercases params in
-  let numberOfDigits := getNumberOfDigits params in
-  let numberOfSymbols := getNumberOfSymbols params in
-  if beq_nat totalCharacters (numberOfLowercases + numberOfUppercases + numberOfDigits + numberOfSymbols) then
-    let lowercase := produceLowercase (getNumberOfLowercases params) in
-    let uppercase := produceUppercase (getNumberOfUppercases params) in
-    let digits := produceDigits (getNumberOfDigits params) in
-    let symbols := produceSymbols (getNumberOfSymbols params) in
-    lowercase ++ uppercase ++ digits ++ symbols
-  else "Change to optional return"
-.
-
-Compute producePassword params.
-
-Fixpoint getNRandoms (n:nat) (r:Z) :=
-  let p := randomRNat (33, 126) (mkRandomSeed r) in
-    match n with
-      | 0 => [fst p]
-      | S n' => (fst p) :: getNRandoms n' (fst p)
-    end.
 
 (* Number to Ascii extracted from https://coq.inria.fr/stdlib/Coq.Strings.Ascii.html *)
 Definition ascii_of_pos : positive -> ascii :=
@@ -146,19 +96,71 @@ Definition ascii_of_N (n : N) :=
     | Npos p => ascii_of_pos p
   end.
 
-Compute 5 + 3.
 Definition ascii_of_nat (a : nat) := ascii_of_N (N.of_nat a).
 
-Compute ascii_of_N 65.
-
-Fixpoint generatePassword (asciiCodes : list nat) : string :=
+Fixpoint convertToString (asciiCodes : list nat) : string :=
   match asciiCodes with
     | [] => ""
-    | h :: t => (String (ascii_of_nat h) "") ++ generatePassword t
+    | h :: t => (String (ascii_of_nat h) "") ++ convertToString t
   end.
 
+(* Get elements of the tuple *)
+Definition getLength (params : (nat * nat * nat* nat * nat)) :=
+  fst (fst (fst (fst params))).
 
-Extraction "f.ml" generatePassword.
+Definition getNumberOfLowercases (params : (nat * nat * nat* nat * nat)) :=
+  snd (fst (fst (fst params))).
+
+Definition getNumberOfUppercases (params : (nat * nat * nat* nat * nat)) :=
+  snd (fst (fst params)).
+
+Definition getNumberOfDigits (params : (nat * nat * nat* nat * nat)) :=
+  snd (fst params).
+
+Definition getNumberOfSymbols (params : (nat * nat * nat* nat * nat)) :=
+  snd params.
+
+(* Produce parts of the password *)
+Fixpoint produceLowercase (size : nat) : string :=
+  let lower := 97 in
+  let upper := 122 in
+  (* convertToString (n_rnums size (Random.int upper) lower upper) *)
+  "lowercase".
+
+Fixpoint produceUppercase (size : nat) : string :=
+  let lower := 65 in
+  let upper := 90 in
+  (* convertToString (n_rnums size (Random.int upper) lower upper) *)
+  "uppercase".
+
+Fixpoint produceDigits (size : nat) : string :=
+  let lower := 48 in
+  let upper := 57 in
+  (* convertToString (n_rnums size (Random.int upper) lower upper) *)
+  "digits".
+
+Fixpoint produceSymbols (size : nat) : string :=
+  let lower := 33 in
+  let upper := 47 in
+  (* convertToString (n_rnums size (Random.int upper) lower upper) *)
+  "symbols".
+
+Definition producePassword (params : (nat * nat * nat* nat * nat)) : string :=
+  let totalCharacters := getLength params in
+  let numberOfLowercases := getNumberOfLowercases params in
+  let numberOfUppercases := getNumberOfUppercases params in
+  let numberOfDigits := getNumberOfDigits params in
+  let numberOfSymbols := getNumberOfSymbols params in
+  if beq_nat totalCharacters (numberOfLowercases + numberOfUppercases + numberOfDigits + numberOfSymbols) then
+    let lowercase := produceLowercase (getNumberOfLowercases params) in
+    let uppercase := produceUppercase (getNumberOfUppercases params) in
+    let digits := produceDigits (getNumberOfDigits params) in
+    let symbols := produceSymbols (getNumberOfSymbols params) in
+    lowercase ++ uppercase ++ digits ++ symbols
+  else "There is an error in the initial tuple."
+.
+
+Extraction "passwordGeneration.ml" mkRandomSeed randomRNat convertToString producePassword.
 
 Example list1 := [48; 86; 122; 35; 72; 123; 114; 87; 60; 65; 117].
 Example list2 := [60; 65;117;79;100;89;47;121;77;67;49].

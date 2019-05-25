@@ -125,13 +125,13 @@ let randomRNat = (fun (x,y) r -> if y < x then failwith "choose called with unor
 let _ = Random.self_init()
 
 (* This function receives a number n and an initial seed (int). It yields a list of (n+1) random ints between 1 and 50 *)
-let rec n_rnums n r =
-  let p = randomRNat (33,126) (mkRandomSeed r)
-  in if n==0 then [fst p] else (fst p)::n_rnums (n-1) (fst p)
+let rec n_rnums n r lower upper =
+  let p = randomRNat (lower, upper) (mkRandomSeed r)
+  in if n==0 then [fst p] else (fst p)::n_rnums (n-1) (fst p) lower upper
 
 (* We define a function to print a list of ints *)
 let rec print_list = function 
   [] -> ()
   | e::l -> print_int e ; print_string " " ; print_list l
 
-let () = print_list (n_rnums 10 (Random.int 136))
+let () = print_list (n_rnums 10 (Random.int 100) 97 122)
