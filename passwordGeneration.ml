@@ -1,4 +1,3 @@
-
 (** val fst : ('a1 * 'a2) -> 'a1 **)
 
 let fst = function
@@ -8,8 +7,6 @@ let fst = function
 
 let snd = function
 | (_, y) -> y
-
-
 
 (** val add : int -> int -> int **)
 
@@ -116,8 +113,8 @@ let ascii_of_nat a =
 (** val convertToString : int list -> char list **)
 
 let rec convertToString = function
-| [] -> []
-| h :: t -> append ((ascii_of_nat h) (convertToString t))
+| [] -> ""
+| h :: t -> ((Char.escaped (ascii_of_nat h)) ^ convertToString t)
 
 (** val getLength : ((((int * int) * int) * int) * int) -> int **)
 
@@ -163,7 +160,7 @@ let rec produceUppercase size =
 let rec produceDigits size =
         let lower = 48 in
         let upper = 57 in
-        convertToString (n_rnums size (Random.int upper) lower upper)
+        convertToString (n_rnums size (Random.int lower) lower upper)
 
 (** val produceSymbols : int -> char list **)
 
@@ -187,10 +184,25 @@ let producePassword params =
        let uppercase = produceUppercase (getNumberOfUppercases params) in
        let digits = produceDigits (getNumberOfDigits params) in
        let symbols = produceSymbols (getNumberOfSymbols params) in
-       concat lowercase (concat uppercase (concat digits symbols))
+       lowercase ^ (uppercase ^ (digits ^ symbols))
   else "Error"
 
 
 let params = ((((20, 5), 5), 5), 5)
 
-let () = producePassword params
+let () = print_string "Input the length of the password: ";; 
+let length = read_int() in
+print_string "Input the number of lowercases: ";;
+let lowercases = read_int() in
+print_string "Input the number of uppercases: ";;
+let uppercases = read_int() in
+print_string "Input the number of digits: ";;
+let digits = read_int() in
+print_string "Input the number of symbols: ";;
+let symbols = read_int() in
+let () = print_endline (producePassword ((((length, lowercases), uppercases), digits), symbols))
+print_string "Finish"
+(*
+print_string "Input: ";;
+read_line();;
+  print_string "Hello"*)
