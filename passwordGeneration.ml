@@ -1,3 +1,10 @@
+
+(** val negb : bool -> bool **)
+
+let negb = function
+| true -> false
+| false -> true
+
 (** val fst : ('a1 * 'a2) -> 'a1 **)
 
 let fst = function
@@ -8,9 +15,15 @@ let fst = function
 let snd = function
 | (_, y) -> y
 
+
+
 (** val add : int -> int -> int **)
 
 let rec add = (+)
+
+(** val sub : int -> int -> int **)
+
+let rec sub = fun n m -> Pervasives.max 0 (n-m)
 
 module Nat =
  struct
@@ -111,10 +124,9 @@ let ascii_of_nat a =
   ascii_of_N (N.of_nat a)
 
 (** val convertToString : int list -> char list **)
-
 let rec convertToString = function
-| [] -> ""
-| h :: t -> ((Char.escaped (ascii_of_nat h)) ^ convertToString t)
+| [] -> []
+| h :: t -> append ((ascii_of_nat h)::[]) (convertToString t)
 
 (** val getLength : ((((int * int) * int) * int) * int) -> int **)
 
@@ -177,32 +189,42 @@ let producePassword params =
   let numberOfUppercases = getNumberOfUppercases params in
   let numberOfDigits = getNumberOfDigits params in
   let numberOfSymbols = getNumberOfSymbols params in
-  if (=) totalCharacters
-       (add (add (add numberOfLowercases numberOfUppercases) numberOfDigits)
-         numberOfSymbols)
-  then let lowercase = produceLowercase (getNumberOfLowercases params) in
+  let totalElements = 
+    add (add (add numberOfLowercases numberOfUppercases) numberOfDigits) 
+      numberOfSymbols 
+  in 
+  if (||) (negb ((<=) totalCharacters totalElements)) 
+      ((=) totalCharacters totalElements)
+  then let remainingCharacters =
+         sub totalCharacters
+           (add
+             (add (add numberOfLowercases numberOfUppercases) numberOfDigits)
+             numberOfSymbols)
+       in
+       let lowercase = produceLowercase (getNumberOfLowercases params) in
        let uppercase = produceUppercase (getNumberOfUppercases params) in
        let digits = produceDigits (getNumberOfDigits params) in
-       let symbols = produceSymbols (getNumberOfSymbols params) in
-       lowercase ^ (uppercase ^ (digits ^ symbols))
-  else "Error"
+       let symbols =
+         produceSymbols (add remainingCharacters (getNumberOfSymbols params))
+       in
+       append lowercase (append uppercase (append digits symbols))
+  else 'T'::('h'::('e'::('r'::('e'::(' '::('i'::('s'::(' '::('a'::('n'::(' '::('e'::('r'::('r'::('o'::('r'::(' '::('i'::('n'::(' '::('t'::('h'::('e'::(' '::('i'::('n'::('i'::('t'::('i'::('a'::('l'::(' '::('t'::('u'::('p'::('l'::('e'::('.'::[]))))))))))))))))))))))))))))))))))))))
+  
+let camlstring_of_coqstring (s: char list) =
+        let r = Bytes.create (List.length s) in
+        let rec fill pos = function
+                | [] -> r
+                | c :: s -> Bytes.set r pos c; fill (pos +1) s
+        in Bytes.to_string (fill 0 s)
 
-
-let params = ((((20, 5), 5), 5), 5)
-
-let () = print_string "Input the length of the password: ";; 
+let () = print_string "Input the length of the password: ";;
 let length = read_int() in
-print_string "Input the number of lowercases: ";;
+let () = print_string "Input the number of lowercases: " in
 let lowercases = read_int() in
-print_string "Input the number of uppercases: ";;
+let () = print_string "Input the number of uppercases: " in
 let uppercases = read_int() in
-print_string "Input the number of digits: ";;
+let () = print_string "Input the number of digits: " in
 let digits = read_int() in
-print_string "Input the number of symbols: ";;
+let () = print_string "Input the number of symbols: " in
 let symbols = read_int() in
-let () = print_endline (producePassword ((((length, lowercases), uppercases), digits), symbols))
-print_string "Finish"
-(*
-print_string "Input: ";;
-read_line();;
-  print_string "Hello"*)
+print_endline (camlstring_of_coqstring (producePassword ((((length, lowercases), uppercases), digits), symbols)))

@@ -65,6 +65,18 @@ Extract Constant getNRandoms =>
   let p := randomRNat (lower, upper) (mkRandomSeed r) in
   if beq_nat n 0 then [fst p] else (fst p)::n_rnums (n-1) (fst p) lower upper.
 *)
+
+(**    Begin attempt   **)
+(*CoInductive GeneratedNats :=
+  | lNat : list nat -> GeneratedNats
+  | singleNat : nat -> list nat -> GeneratedNats.
+
+CoFixpoint n_rnums (n : nat) (r : nat) (lower : nat) (upper : nat) : GeneratedNats :=
+  let p := randomRNat (lower, upper) (mkRandomSeed (Z.of_nat r)) in
+  if beq_nat n 0 then lNat [fst p] else singleNat (fst p) (n_rnums (n-1) (fst p) lower upper).
+*)
+(**   End attempt     **)
+
 (* Params represents the policy of the password generation
   (N, l, u, d, s) where:
     - N represents the length of the password
@@ -151,16 +163,21 @@ Definition producePassword (params : (nat * nat * nat* nat * nat)) : string :=
   let numberOfUppercases := getNumberOfUppercases params in
   let numberOfDigits := getNumberOfDigits params in
   let numberOfSymbols := getNumberOfSymbols params in
-  if beq_nat totalCharacters (numberOfLowercases + numberOfUppercases + numberOfDigits + numberOfSymbols) then
+  let totalElements := numberOfLowercases + numberOfUppercases + numberOfDigits + numberOfSymbols in
+  if (negb(totalCharacters <=? totalElements)) || (beq_nat totalCharacters totalElements)
+  then
+    let remainingCharacters := totalCharacters - (numberOfLowercases + numberOfUppercases + numberOfDigits + numberOfSymbols) in
     let lowercase := produceLowercase (getNumberOfLowercases params) in
     let uppercase := produceUppercase (getNumberOfUppercases params) in
     let digits := produceDigits (getNumberOfDigits params) in
-    let symbols := produceSymbols (getNumberOfSymbols params) in
+    let symbols := produceSymbols (remainingCharacters + (getNumberOfSymbols params)) in
     lowercase ++ uppercase ++ digits ++ symbols
   else "There is an error in the initial tuple."
 .
 
-Extraction "passwordGeneration.ml" mkRandomSeed randomRNat convertToString producePassword.
+Infix "^" := appn (at level 30, right associativity) : fun_scope.
+
+Extraction "passwordGeneration1.ml" mkRandomSeed randomRNat convertToString producePassword.
 
 Example list1 := [48; 86; 122; 35; 72; 123; 114; 87; 60; 65; 117].
 Example list2 := [60; 65;117;79;100;89;47;121;77;67;49].
